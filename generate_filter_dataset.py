@@ -4,25 +4,21 @@ import glob
 from tqdm import tqdm
 import argparse
 import numpy as np
-import random # Added for shuffling
+import random
 
-# --- Main Configuration ---
-# Set this to True if running on Google Colab, False if running locally
 RUNNING_IN_COLAB = False
 
-# --- Path Settings (Defaults) ---
 if RUNNING_IN_COLAB:
     from google.colab import drive
     DRIVE_MOUNT_POINT = "/content/drive"
     DEFAULT_BASE_PATH = os.path.join(DRIVE_MOUNT_POINT, "My Drive/adobe5k")
 else:
+    # Change this path to the base directory of your datasets accordingly
     DEFAULT_BASE_PATH = "path/to/your/local/datasets_folder"
 
 DEFAULT_INPUT_SUBDIR = "raw"
 
 
-# --- Filter Functions (Unchanged) ---
-# ... (all your apply_..._filter functions are here) ...
 def apply_oil_painting_filter(img, size=10, dyn_ratio=1):
     return cv2.xphoto.oilPainting(img, size, dyn_ratio)
 def apply_pencil_sketch_filter(img, sigma_s=60, sigma_r=0.07, shade_factor=0.05):
@@ -54,9 +50,6 @@ FILTER_FUNCTIONS = {
 
 
 def process_images(args):
-    """
-    Main function to process all images in a directory with the selected filter.
-    """
     input_dir = os.path.join(args.base_path, args.input_subdir)
     if not args.output_subdir:
         args.output_subdir = f"{args.filter}_filtered"
@@ -86,14 +79,11 @@ def process_images(args):
 
     print(f"Found {len(image_paths)} total images in the source directory.")
 
-    # --- ADDED: Logic to limit the number of images ---
-    # Shuffle the list first to ensure we get a random subset
     random.shuffle(image_paths)
 
     if args.num_images != -1 and args.num_images < len(image_paths):
         print(f"Limiting processing to a random subset of {args.num_images} images.")
         image_paths = image_paths[:args.num_images]
-    # --- End of new logic ---
 
     print(f"Will process {len(image_paths)} images.")
     
@@ -137,12 +127,9 @@ if __name__ == '__main__':
     parser.add_argument('--input_subdir', type=str, default=DEFAULT_INPUT_SUBDIR, help="Subdirectory containing raw images.")
     parser.add_argument('--output_subdir', type=str, default=None, help="Subdirectory to save filtered images. (Defaults to 'filter_name_filtered')")
     
-    # --- ADDED: Argument to limit number of images ---
     parser.add_argument('--num_images', type=int, default=-1, help="Maximum number of images to process. Default is -1, which means all images.")
 
-    # Filter-specific Arguments
     parser.add_argument('--oil_size', type=int, default=10, help="[Oil] Size of the neighborhood.")
-    # ... (other filter-specific arguments are here) ...
     parser.add_argument('--oil_dyn_ratio', type=int, default=1, help="[Oil] Contrast parameter.")
     parser.add_argument('--sketch_sigma_s', type=int, default=60, help="[Sketch] Sigma_s parameter.")
     parser.add_argument('--sketch_sigma_r', type=float, default=0.07, help="[Sketch] Sigma_r parameter.")

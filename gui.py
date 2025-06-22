@@ -8,7 +8,6 @@ import cv2
 from skimage.metrics import structural_similarity as ssim
 import tensorflow as tf
 
-# Import functions from our other scripts
 from apply_filter import apply_filter_tiled, preprocess_image, postprocess_output
 from filter_library import FILTER_FUNCTIONS
 
@@ -18,19 +17,17 @@ class FilterApp:
         self.root.title("Image Filter Applicator & Evaluator")
         self.root.geometry("1600x900")
 
-        # --- Variables ---
         self.input_path = tk.StringVar()
-        self.models_dir_path = tk.StringVar() # Path to the folder containing models
-        self.model_path = tk.StringVar()      # Full path to the selected model
+        self.models_dir_path = tk.StringVar()
+        self.model_path = tk.StringVar()
         self.output_path = tk.StringVar()
         self.use_tiled_inference = tk.BooleanVar(value=True)
         self.status_text = tk.StringVar(value="Ready")
         self.ssim_score_text = tk.StringVar(value="SSIM: -")
         self.selected_filter = tk.StringVar()
 
-        # --- Model Mapping ---
         self.model_map = {
-            "gaussian": "blur.keras", # Assuming blur.keras is for gaussian
+            "gaussian": "blur.keras",
             "cartoon": "cartoon.keras",
             "grayscale": "grayscale.h5",
             "oil": "oil.h5",
@@ -38,7 +35,6 @@ class FilterApp:
             "sketch": "sketch.h5"
         }
 
-        # --- UI Layout ---
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.pack(fill="both", expand=True)
         control_frame = ttk.Frame(main_frame, padding="10")
@@ -46,12 +42,10 @@ class FilterApp:
         image_frame = ttk.Frame(main_frame, padding="10")
         image_frame.pack(side="right", fill="both", expand=True)
 
-        # --- Controls ---
         ttk.Label(control_frame, text="1. Select Input Image:").pack(anchor="w", pady=2)
         ttk.Entry(control_frame, textvariable=self.input_path, width=50).pack(anchor="w")
         ttk.Button(control_frame, text="Browse...", command=self.select_input_image).pack(anchor="w", pady=(0, 10))
 
-        # --- ADDED: Models Directory Selection ---
         ttk.Label(control_frame, text="2. Select Models Directory:").pack(anchor="w", pady=2)
         ttk.Entry(control_frame, textvariable=self.models_dir_path, width=50).pack(anchor="w")
         ttk.Button(control_frame, text="Browse...", command=self.select_models_dir).pack(anchor="w", pady=(0, 10))
@@ -60,7 +54,6 @@ class FilterApp:
         self.filter_combobox = ttk.Combobox(control_frame, textvariable=self.selected_filter, width=48, state="readonly")
         self.filter_combobox['values'] = list(FILTER_FUNCTIONS.keys())
         self.filter_combobox.pack(anchor="w", pady=(0, 10))
-        # Bind the selection event to our new function
         self.filter_combobox.bind('<<ComboboxSelected>>', self.on_filter_selected)
 
         ttk.Label(control_frame, text="4. Trained Model File (Auto-selected):").pack(anchor="w", pady=2)
@@ -74,8 +67,6 @@ class FilterApp:
         ttk.Checkbutton(control_frame, text="Use Tiled Inference (High Quality)", variable=self.use_tiled_inference).pack(anchor="w", pady=10)
         ttk.Button(control_frame, text="Apply & Compare", command=self.start_inference_thread, style="Accent.TButton").pack(anchor="w", pady=20, ipady=5)
 
-        # Status Bar, Image Displays, etc. (No changes here)
-        # ... (rest of the __init__ method is the same)
         status_frame = ttk.Frame(self.root, relief="sunken")
         status_frame.pack(side="bottom", fill="x")
         status_bar = ttk.Label(status_frame, textvariable=self.status_text, anchor="w", padding="5")
@@ -104,18 +95,16 @@ class FilterApp:
         path = filedialog.askdirectory(title="Select Folder Containing Your Models")
         if path:
             self.models_dir_path.set(path)
-            # If a filter is already selected, try to update the model path
             if self.selected_filter.get():
                 self.on_filter_selected(None)
 
     def on_filter_selected(self, event):
-        """Called when a filter is chosen from the dropdown."""
         filter_key = self.selected_filter.get()
         models_dir = self.models_dir_path.get()
         
         if not models_dir:
             messagebox.showwarning("Warning", "Please select the models directory first.")
-            self.selected_filter.set("") # Clear selection
+            self.selected_filter.set("")
             return
 
         if filter_key in self.model_map:
@@ -125,18 +114,16 @@ class FilterApp:
             if os.path.exists(full_path):
                 self.model_path.set(full_path)
             else:
-                self.model_path.set("") # Clear the path if model not found
+                self.model_path.set("")
                 messagebox.showwarning("Model Not Found", f"Could not find '{model_filename}' in the selected directory.")
         else:
             self.model_path.set("")
 
     def select_model(self):
-        # This function now acts as a manual override
         path = filedialog.askopenfilename(filetypes=[("Keras Model", "*.keras *.h5")])
         if path:
             self.model_path.set(path)
 
-    # ... (select_output_path, display_image, calculate_ssim, start_inference_thread, and run_inference methods are unchanged) ...
     def select_output_path(self):
         input_filename = os.path.basename(self.input_path.get())
         suggested_filename = "output.png"
@@ -153,9 +140,9 @@ class FilterApp:
             if path:
                 img_pil = Image.open(path)
             elif img_data is not None:
-                if len(img_data.shape) == 2 or img_data.shape[2] == 1: # Grayscale
+                if len(img_data.shape) == 2 or img_data.shape[2] == 1:
                     img_pil = Image.fromarray(img_data)
-                else: # Color
+                else:
                     img_pil = Image.fromarray(cv2.cvtColor(img_data, cv2.COLOR_BGR2RGB))
             else:
                 return
